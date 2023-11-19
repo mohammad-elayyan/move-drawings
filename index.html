@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Move Drawing</title>
+
+    <style>
+        @font-face {
+            src: url(it/DG-3asomy-Regular.ttf);
+            font-family: '3asomy';
+        }
+
+        body {
+            background-image: url(it/bg.png);
+            /* background: red; */
+            display: flex;
+            flex-direction: column;
+            gap: 1vw;
+            padding: .5vw;
+            direction: rtl;
+            /* max-width: 90vw; */
+            background-repeat: no-repeat;
+            background-position: top;
+            background-size: cover;
+            /* height: 100vh; */
+            /* overflow: hidden; */
+        }
+
+        input {
+            display: none;
+        }
+
+        .sugg {
+            display: flex;
+            width: 100%;
+            /* flex-direction: column; */
+            gap: 0.2vw;
+            justify-content: space-evenly;
+            align-items: center;
+        }
+
+        .sugg img {
+            width: 12vw;
+            border: .1vw solid;
+            border-radius: 8px;
+        }
+
+        .sugg img {
+            border-top-color: rgba(255, 0, 0, .2);
+            border-left-color: rgba(255, 0, 0, .2);
+            border-bottom-color: rgba(0, 0, 255, .2);
+            border-right-color: rgba(0, 0, 255, .2);
+        }
+
+        .sugg img:hover {
+            box-shadow: 0 0 .2vw rgba(255, 0, 0, .5);
+        }
+
+        .tools img {
+            width: 18.5vw;
+            vertical-align: sub;
+        }
+
+        button {
+            width: 6vw;
+            height: 2.6vw;
+            color: #fff;
+            border: none;
+            outline: none;
+            padding: .9vw 0;
+            margin-bottom: .4vw;
+            background: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
+        }
+
+        .add-img {
+            background-image: url(it/add.png);
+            display: inline;
+        }
+
+        button.walk {
+            background-image: url(it/walk.png);
+        }
+
+        button.jump {
+            background-image: url(it/jump.png);
+        }
+
+        .buttons button {
+            /* display: none; */
+            filter: grayscale(.9);
+        }
+
+        .buttons button.active {
+            filter: contrast(1);
+
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        canvas {
+            border: .2vw solid;
+            border-top-color: rgba(255, 0, 0, .2);
+            border-left-color: rgba(255, 0, 0, .2);
+            border-bottom-color: rgba(0, 0, 255, .2);
+            border-right-color: rgba(0, 0, 255, .2);
+        }
+    </style>
+    <script src="https://code.createjs.com/1.0.0/easeljs.min.js"></script>
+</head>
+
+<body>
+
+    <div class="content">
+
+        <div class="tools">
+            <input type="file" id="fileInput" accept="image/*">
+            <img src="it/q.png" alt="">
+            <button class="add-img"></button>
+            <div class="buttons">
+                <button class="walk active"></button>
+                <button class="jump"></button>
+            </div>
+        </div>
+        <canvas id="myCanvas" width="700" height="298"></canvas>
+
+    </div>
+    <div class="sugg">
+        <img src="./it/g.png" class="a" alt="">
+        <img src="./it/c.png" class="a" alt="">
+        <img src="./it/b.png" class="a" alt="">
+        <img src="./it/m.png" class="a" alt="">
+    </div>
+
+    <audio src="./audio/bg.wav" id="aud" loop></audio>
+    <script>
+
+        const imgs = document.querySelectorAll(".sugg img");
+        const btns = document.querySelectorAll(".tools button");
+        const canvas = document.getElementById("myCanvas");
+        const stage = new createjs.Stage("myCanvas");
+        const fileInput = document.getElementById('fileInput');
+        const addImg = document.querySelector('.add-img');
+        let a = 400;
+        let blob = {};
+
+        // Create a function to handle the conversion
+        function convertImageToBlob(imageElement) {
+            // Create a canvas element
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set the canvas dimensions to match the image
+            canvas.width = imageElement.width;
+            canvas.height = imageElement.height;
+
+            // Draw the image onto the canvas
+            ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
+
+            return canvas;
+        }
+
+        imgs.forEach((img, i) => {
+            img.onclick = (e) => {
+
+                const file = convertImageToBlob(img);
+                // Convert the canvas to a Blob
+                file.toBlob(function (b) {
+                    // Now 'blob' contains the image data in Blob format
+                    // You can use this Blob as needed, for example, upload it to a server
+                    removeBitmap();
+                    handleReader(b);
+                });
+            }
+        })
+        btns.forEach((btn, i) => {
+            btn.onclick = () => {
+                for (let l = 0; l < btns.length; l++) {
+                    btns[l].classList.remove("active");
+                }
+                canvas.classList = [];
+                switch (i) {
+                    case 1:
+                        canvas.classList.add("walk");
+                        a = 400;
+                        break;
+                    case 2:
+                        canvas.classList.add("jump")
+                        a = 240;
+                        break;
+
+                    default:
+                        break;
+                }
+                btn.classList.add("active");
+            }
+        })
+        addImg.onclick = () => fileInput.click()
+
+        fileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            removeBitmap();
+            handleReader(file);
+        });
+
+        function removeBitmap() {
+            // Check if stage has a child with instanceof Bitmap
+            for (var i = stage.numChildren - 1; i >= 0; i--) {
+                var child = stage.getChildAt(i);
+                if (child instanceof createjs.Bitmap) {
+                    // Remove the Bitmap
+                    stage.removeChildAt(i);
+                    break;  // Assuming you only want to remove one Bitmap
+                }
+            }
+
+            // Update the stage
+            stage.update();
+        }
+
+        function handleReader(file) {
+
+            const audio = document.getElementById("aud");
+
+            audio.src = "./audio/bg.wav";
+            audio.play();
+
+            const reader = new FileReader();
+
+            reader.onload = function (event) {
+                const img = new Image();
+                img.onload = function () {
+
+                    const bitmap = new createjs.Bitmap(img);
+
+                    bitmap.regX = img.width / 1.7; // Set registration point to the center of the image
+                    if (img.height / 2 >= stage.canvas.height) {
+                        bitmap.regY = stage.canvas.height / img.height - img.height;
+                        bitmap.scaleX = .1;
+                        bitmap.scaleY = .1;
+                        console.log("121");
+                    } else {
+                        if (img.height >= stage.canvas.height / 1.5) {
+
+                            bitmap.regY = stage.canvas.height / img.height - img.height / 4;
+                        } else {
+                            bitmap.regY = stage.canvas.height / img.height - img.height / 4;
+
+                        }
+                    }
+                    bitmap.x = stage.canvas.width / 4; // Center the image on the canvas
+                    bitmap.y = 180;
+                    stage.addChild(bitmap);
+                    createjs.Ticker.addEventListener("tick", handleTick);
+
+                    let direction = 1;
+                    let speed = 1.2;
+                    function handleTick() {
+
+                        bitmap.x += (speed * direction) * 8;
+                        bitmap.y += 15;
+
+                        if (bitmap.y > stage.canvas.height - a) {
+                            bitmap.y = speed * direction / 2;
+
+                        }
+                        if (bitmap.x > stage.canvas.width + 50) {
+                            direction *= -1;
+                            bitmap.skewY = 180;
+                        } else if (bitmap.x < -50) {
+                            direction *= -1;
+
+                            bitmap.skewY = 0;
+                        }
+                        stage.update();
+
+                    }
+
+                };
+                img.src = event.target.result;
+
+            };
+
+            reader.readAsDataURL(file);
+
+        }
+    </script>
+</body>
+
+</html>
