@@ -141,9 +141,10 @@
         <img src="./it/m.png" class="a" alt="">
     </div>
 
-    <audio src="./audio/bg.wav" id="aud" loop></audio>
+    <audio src="./audio/bg.mp3" id="aud" loop></audio>
     <script>
 
+        const audio = document.getElementById("aud");
         const imgs = document.querySelectorAll(".sugg img");
         const btns = document.querySelectorAll(".tools button");
         const canvas = document.getElementById("myCanvas");
@@ -192,9 +193,13 @@
                     case 1:
                         canvas.classList.add("walk");
                         a = 400;
+                        audio.src = "./audio/bg.mp3";
+                        audio.play();
                         break;
                     case 2:
                         canvas.classList.add("jump")
+                        audio.src = "./audio/jump.mp3";
+                        audio.play();
                         a = 240;
                         break;
 
@@ -229,9 +234,6 @@
 
         function handleReader(file) {
 
-            const audio = document.getElementById("aud");
-
-            audio.src = "./audio/bg.wav";
             audio.play();
 
             const reader = new FileReader();
@@ -242,41 +244,49 @@
 
                     const bitmap = new createjs.Bitmap(img);
 
-                    bitmap.regX = img.width / 1.7; // Set registration point to the center of the image
-                    if (img.height / 2 >= stage.canvas.height) {
-                        bitmap.regY = stage.canvas.height / img.height - img.height;
-                        bitmap.scaleX = .1;
-                        bitmap.scaleY = .1;
-                        console.log("121");
-                    } else {
-                        if (img.height >= stage.canvas.height / 1.5) {
+                    let originalWidth = bitmap.image.width;
+                    let originalHeight = bitmap.image.height;
 
-                            bitmap.regY = stage.canvas.height / img.height - img.height / 4;
-                        } else {
-                            bitmap.regY = stage.canvas.height / img.height - img.height / 4;
+                    // Set the maximum width and height you want the image to be
+                    let maxWidth = 700;
+                    let maxHeight = 298;
 
-                        }
-                    }
-                    bitmap.x = stage.canvas.width / 4; // Center the image on the canvas
-                    bitmap.y = 180;
+                    // Calculate the scaling factors for both width and height
+                    let scaleX = maxWidth / originalWidth;
+                    let scaleY = maxHeight / originalHeight;
+
+                    // Use the smaller scaling factor to maintain aspect ratio
+                    let minScale = Math.min(scaleX, scaleY);
+
+                    // Apply the scaling factors to resize the image
+                    bitmap.scaleX = minScale - .5;
+                    bitmap.scaleY = minScale - .5;
+
+                    // Center the bitmap
+                    bitmap.regX = bitmap.image.width / 2 + bitmap.image.width / 2;
+                    bitmap.regY = bitmap.image.height / 2 - bitmap.image.height / 1.5;
+                    // bitmap.x = stage.canvas.width / 2;
+                    // bitmap.y = stage.canvas.height / 2;
+
                     stage.addChild(bitmap);
+
                     createjs.Ticker.addEventListener("tick", handleTick);
 
                     let direction = 1;
-                    let speed = 1.2;
+                    let speed = 1;
                     function handleTick() {
 
-                        bitmap.x += (speed * direction) * 8;
+                        bitmap.x += (speed * direction) * 8.5;
                         bitmap.y += 15;
 
                         if (bitmap.y > stage.canvas.height - a) {
                             bitmap.y = speed * direction / 2;
 
                         }
-                        if (bitmap.x > stage.canvas.width + 50) {
+                        if (bitmap.x > stage.canvas.width + bitmap.image.width / 2) {
                             direction *= -1;
                             bitmap.skewY = 180;
-                        } else if (bitmap.x < -50) {
+                        } else if (bitmap.x < bitmap.image.width / 2 * -1) {
                             direction *= -1;
 
                             bitmap.skewY = 0;
