@@ -90,6 +90,10 @@
             background-image: url(it/jump.png);
         }
 
+        button.dance {
+            background-image: url(it/dance.png);
+        }
+
         .buttons button {
             /* display: none; */
             filter: grayscale(.9);
@@ -116,6 +120,7 @@
         }
     </style>
     <script src="https://code.createjs.com/1.0.0/easeljs.min.js"></script>
+    <script src="https://code.createjs.com/1.0.0/tweenjs.min.js"></script>
 </head>
 
 <body>
@@ -129,6 +134,7 @@
             <div class="buttons">
                 <button class="walk active"></button>
                 <button class="jump"></button>
+                <button class="dance"></button>
             </div>
         </div>
         <canvas id="myCanvas" width="700" height="298"></canvas>
@@ -202,6 +208,13 @@
                         audio.play();
                         a = 240;
                         break;
+                    case 3:
+                        canvas.classList.add("dance")
+                        audio.src = "./audio/bg.mp3";
+                        audio.play();
+                        a = 401;
+                        break;
+
 
                     default:
                         break;
@@ -258,39 +271,84 @@
                     // Use the smaller scaling factor to maintain aspect ratio
                     let minScale = Math.min(scaleX, scaleY);
 
+                    let f;
+
+                    while (bitmap.image.height > stage.canvas.height) {
+                        bitmap.image.width -= 5;
+                        bitmap.image.height -= 5;
+                    }
+
+                    while (bitmap.image.height >= stage.canvas.height - 200 && bitmap.image.height <= stage.canvas.height) {
+                        f = minScale;
+
+                        f -= .1;
+                        bitmap.scaleY = f;
+                        bitmap.scaleX = f;
+                        bitmap.image.height--;
+                    }
+
+
                     // Apply the scaling factors to resize the image
-                    bitmap.scaleX = minScale - .5;
-                    bitmap.scaleY = minScale - .5;
 
                     // Center the bitmap
-                    bitmap.regX = bitmap.image.width / 2 + bitmap.image.width / 2;
-                    bitmap.regY = bitmap.image.height / 2 - bitmap.image.height / 1.5;
-                    // bitmap.x = stage.canvas.width / 2;
-                    // bitmap.y = stage.canvas.height / 2;
+                    // bitmap.regX = bitmap.image.width / 2 + bitmap.image.width / 2;
+                    // bitmap.regY = bitmap.image.height / 2 - bitmap.image.height / 1.5;
+                    bitmap.x = 0;
+                    bitmap.y = 0;
 
                     stage.addChild(bitmap);
 
+
                     createjs.Ticker.addEventListener("tick", handleTick);
 
+
                     let direction = 1;
-                    let speed = 1;
+                    let speed = 1.2;
                     function handleTick() {
+
 
                         bitmap.x += (speed * direction) * 8.5;
                         bitmap.y += 15;
+
+
 
                         if (bitmap.y > stage.canvas.height - a) {
                             bitmap.y = speed * direction / 2;
 
                         }
+                        if (a === 401) {
+                            bitmap.skewX = 80;
+                            bitmap.skewY = 80;
+                            speed = 2;
+
+                            if (direction === -1) {
+                                bitmap.rotation = 225;
+                                bitmap.y = bitmap.image.height * 2;
+                            } else {
+                                bitmap.rotation = 0;
+                                bitmap.y = 0;
+                            }
+                        } else {
+                            speed = 1.2;
+                            if (direction === -1) {
+
+                                bitmap.skewY = 180;
+                            } else {
+                                bitmap.skewY = 0;
+                            }
+
+                            bitmap.skewX = 0;
+                        }
+
                         if (bitmap.x > stage.canvas.width + bitmap.image.width / 2) {
                             direction *= -1;
                             bitmap.skewY = 180;
+
                         } else if (bitmap.x < bitmap.image.width / 2 * -1) {
                             direction *= -1;
-
                             bitmap.skewY = 0;
                         }
+
                         stage.update();
 
                     }
